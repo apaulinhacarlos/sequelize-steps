@@ -1,5 +1,7 @@
 # Passos para a criação de uma aplicação usando o Sequelize
 
+Original -> https://gist.github.com/IagoPFerreira/b0f6cd1885d9c09fb0a33c96dd0ab8ff
+
 1. Iniciar a aplicação
 
 ```bash
@@ -12,7 +14,7 @@ npm init -y
 npm install sequelize
 ```
 
-3. Instalar a CLI
+3. Instalar a CLI (pode ser em ambiente dev)
 
 ```bash
 npm install sequelize-cli
@@ -134,9 +136,10 @@ npx sequelize db:create
 ```
 
 9. Criar um model
+Model é a representação das linhas das tabelas do DB em nossa aplicação. São basicamente objetos JS que usamos para abstrair as Queries SQL.
 
 ```bash
-npx sequelize model:generate --name User --attributes fullName:string
+npx sequelize model:generate --name nomeDoModel --attributes nomeDoAtributo:string
 ```
 
 10. Alterar o model do formato de classe:
@@ -175,10 +178,12 @@ module.exports = (sequelize, DataTypes) => {
 // models/user.js
 
 const User = (sequelize, DataTypes) => {
-  const User = sequelize.define("User", {
+  const User = sequelize.define("User", { // sempre no singular e primeira letra em caixa alta
     fullName: DataTypes.STRING,
   }, {
-    underscored: true
+    tableName: 'users', // define o nome da tabela -> sempre no plural e em caixa baixa
+    underscored: true, // "underscored: true" padroniza camelCase com snake_case
+    timestamps: true, // "timestamps: false" desobriga a criação do createdAt e updateAt na migration
   });
 
   return User;
@@ -188,6 +193,7 @@ module.exports = User;
 ```
 
 11. Alterar as migrations, caso seja necessário
+Migrations cria e versiona schemas no DB
 
 ```JavaScript
 // migrations/XXXXXXXXXXXXX-create-user.js
@@ -203,8 +209,10 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       fullName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        field: 'full_name' // field muda o nome do atributo
       },
+      // o não uso do createdAt e updatedAt obriga o uso "timestamps: false" no model
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -233,7 +241,7 @@ npx sequelize db:migrate
 npx sequelize db:migrate:undo
 ```
 
-> Caso seja necessária a modificação de alguma tabela, você pode rodar um comando para gerar uma nova migration e então fazer as alterações que você precisar:
+> Caso seja necessária a modificação (versionamento) de alguma tabela, você pode rodar um comando para gerar uma nova migration e então fazer as alterações que você precisar:
 
 ```bash
 npx sequelize migration:generate --name add-column-phone-table-users
@@ -263,7 +271,7 @@ module.exports = {
 npx sequelize db:migrate
 ```
 
-> E alterar o model para incluit a nova coluna:
+> E alterar o model para incluir a nova coluna:
 
 ```JavaScript
 // models/user.js
@@ -281,6 +289,7 @@ module.exports = User;
 ```
 
 13. Criar um novo seed
+Seed alimenta o DB com dados necessários para o funcionamento mínimo e testes da aplicação.
 
 ```bash
 npx sequelize seed:generate --name users
@@ -340,7 +349,7 @@ const User = (sequelize, DataTypes) => {
     fullName: DataTypes.STRING,
     phone_num: DataTypes.STRING,
   }, {
-    timestamps: false,
+    timestamps: false, // "timestamps: true" obriga a criação do createdAt e updateAt na migration
   });
 
   return User;
